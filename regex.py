@@ -1,8 +1,16 @@
 import re
 import os
 import unicodedata
-from microMacroIDs import microtopicIDmap, MacrotopicIDMap
+import sys
+from microMacroIDs import macrotopic_id_map, microtopic_id_map
 
+
+
+def path_checker(path):
+    if len(path) > 255:
+        print(f"Errore: Il percorso supera i 255 caratteri:\n{path}")
+        sys.exit(-3)  # Termina il programma con codice di errore
+    
 
 #questionPattern = r'(\d+)\n(.*?)Pratico: (SI|NO)' #qui vorrei: (numero)\n (quello che voglio io ) ('Pratico: ')[No SI] 
 questionPattern= r'\n(\d+?)\n(.*?)\nA:\n(.*?)\nB:\n(.*?)\nC:\n(.*?)\nD:\n(.*?)\nLivello: ([12])\n[Ss]ub-contenuto: (.*?)\nPratico: [NS][OI]'
@@ -32,8 +40,7 @@ def printMatch(match):
 
 def clean_text(text):
     text = unicodedata.normalize('NFKC', text)
-    # Rimuovi o sostituisci qui altri caratteri problematici, se necessario
-    text = re.sub(r'[^\x00-\x7F]+', ' ', text)  # Rimuove i caratteri non-ASCII, ad esempio
+    text = re.sub(r'[^\x00-\x7F]+', ' ', text)  # Rimuove i caratteri non-ASCII
     return text
 
 def escape_sql_value(value):
@@ -41,35 +48,31 @@ def escape_sql_value(value):
     return value.replace("'", "''")
 
 
-def printDBEntryes(Macrotopic,microtopic,nomeDirectory,nomeFileOutput):
+def printDBEntryes(macroTPstr,microTPstr,nomeFileInput,nomeFileOutSQL):
     
-    MacroTopicId = microtopicIDmap(Macrotopic)
-    microTopicId = microtopicIDmap(microtopic)
-
-    print(Macrotopic+" "+microtopic)
-    print(MacroTopicId+" "+microTopicId)
-    
+    MacroTopicId = macrotopic_id_map(macroTPstr)
+    microTopicId = microtopic_id_map(microTPstr)    
 
     if MacroTopicId is None :
+        print("ERRORE: M acrotopic non trovato in "+{macroTPstr}+" "+{microTPstr})
         exit(-1)
     if microTopicId is None :
+        print("ERRORE: microtopic non trovato in "+{macroTPstr}+" "+{microTPstr})
         exit(-2)
 
 
+
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    directory_radice = os.path.join(script_dir, nomeDirectory)
-    outtxt_file_path = os.path.join(script_dir,nomeFileOutput)
+    out_txt_file_path = os.path.join(script_dir,nomeFileInput)
+    path_checker(out_txt_file_path)
+    out_SQL_file= os.path.join(script_dir, nomeFileOutSQL)
+    path_checker(out_SQL_file)
 
-    testingOutput= os.path.join(script_dir, 'populateDB.sql')
-
-    #print(contenuto)
-
-    with open(outtxt_file_path, 'r', encoding='utf-8') as input_file:
-        with open(testingOutput,'w',encoding='utf-8')as populateDB:
+    with open(out_txt_file_path, 'r', encoding='utf-8') as input_file:
+        with open(out_SQL_file,'a',encoding='utf-8')as populateDB:
             populateDB.write("INSERT INTO ProgettoQuizDB.quiz (macroTopicId, microTopicId, question, correctAnswer, distractor1, distractor2, distractor3, score, subcontent) VALUES\n")
             contenuto = input_file.read()
             contenuto = clean_text(contenuto) 
-            #print("\nstiamo analizzando il contenuto del file .....")
             matches = re.findall(questionPattern,contenuto,re.DOTALL)
             if not matches:
                 print("ERRORE: nessun match trovato")
@@ -84,9 +87,8 @@ def printDBEntryes(Macrotopic,microtopic,nomeDirectory,nomeFileOutput):
                 livello = escape_sql_value(match[6].strip())  # Assuming 'score' for now as there's no score from regex
                 subContenuto = escape_sql_value(match[7].strip().replace("\n", ""))
 
-                # TODO: ora li piazzo così dopo andranno sostituiti quando rimoniniamo la funzione
                 
-                # gestiamo le virgole tra una entry e l'altra
+                # mettiao le , tra una entry e l'altra ed il ; alla fine
                 if i < len(matches) - 1:
                     comma = ','
                 else:
@@ -95,4 +97,4 @@ def printDBEntryes(Macrotopic,microtopic,nomeDirectory,nomeFileOutput):
                 populateDB.write(f"({MacroTopicId}, {microTopicId}, '{testoDomanda}', '{rispostaCorretta}', '{distrattore1}', '{distrattore2}', '{distrattore3}', {livello}, '{subContenuto}'){comma}\n")
 
 
-    print("\n"+Macrotopic+" in "+microtopic+" terminato con successo")
+    #print("\n"+macroTPstr+" in "+microTPstr+" terminato con successo")
