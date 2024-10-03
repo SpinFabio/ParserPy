@@ -9,7 +9,7 @@ from microMacroIDs import macrotopic_id_map, microtopic_id_map
 def path_checker(path):
     if len(path) > 255:
         print(f"Errore: Il percorso supera i 255 caratteri:\n{path}")
-        sys.exit(-3)  # Termina il programma con codice di errore
+        sys.exit(-3)  
     
 
 #questionPattern = r'(\d+)\n(.*?)Pratico: (SI|NO)' #qui vorrei: (numero)\n (quello che voglio io ) ('Pratico: ')[No SI] 
@@ -38,10 +38,17 @@ def printMatch(match):
     print(f"Sub-contenuto: {subContenuto}")
     print("-" * 48 + "\n")
 
+#def clean_text(text):
+ #   text = unicodedata.normalize('NFKC', text)
+  #  text = re.sub(r'[^\x00-\x7F]+', ' ', text)  # Rimuove i caratteri non-ASCII
+   # return text
+
 def clean_text(text):
-    text = unicodedata.normalize('NFKC', text)
-    text = re.sub(r'[^\x00-\x7F]+', ' ', text)  # Rimuove i caratteri non-ASCII
+    text = text.encode('utf-8', 'replace').decode('utf-8')
+    
     return text
+
+
 
 def escape_sql_value(value):
     """ Escape single quotes in SQL value """
