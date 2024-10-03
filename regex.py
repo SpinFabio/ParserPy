@@ -42,10 +42,10 @@ def printMatch(match):
  #   text = unicodedata.normalize('NFKC', text)
   #  text = re.sub(r'[^\x00-\x7F]+', ' ', text)  # Rimuove i caratteri non-ASCII
    # return text
+   # ciao
 
 def clean_text(text):
     text = text.encode('utf-8', 'replace').decode('utf-8')
-    
     return text
 
 

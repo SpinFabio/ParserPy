@@ -9,6 +9,7 @@ def clean_text(text):
     # Rimuovi i segni diacritici (accents) lasciando solo i caratteri "base"
     text = ''.join([char for char in text if not unicodedata.combining(char)])
     
+    
     # Sostituisci l'apostrofo con uno spazio
     text = text.replace("'", " ")
     
